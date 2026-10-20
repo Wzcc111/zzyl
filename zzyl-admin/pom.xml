@@ -17,6 +17,12 @@
 
     <dependencies>
 
+        <!-- MyBatis-Plus：启动模块运行时需要加载护理平台和分页配置中的相关类 -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+        </dependency>
+
         <!-- spring-boot-devtools -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

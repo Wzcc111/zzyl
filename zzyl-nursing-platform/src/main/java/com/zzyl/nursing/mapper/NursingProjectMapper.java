@@ -2,14 +2,19 @@ package com.zzyl.nursing.mapper;
 
 import java.util.List;
 import com.zzyl.nursing.domain.NursingProject;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
  * 护理项目Mapper接口
  * 
  * @author wzc
- * @date 2026-10-18
+ * @date 2026-10-20
  */
-public interface NursingProjectMapper 
+
+
+@Mapper
+public interface NursingProjectMapper extends BaseMapper<NursingProject>
 {
     /**
      * 查询护理项目
