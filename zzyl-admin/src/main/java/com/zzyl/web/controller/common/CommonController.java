@@ -20,6 +20,7 @@ import com.zzyl.common.utils.StringUtils;
 import com.zzyl.common.utils.file.FileUploadUtils;
 import com.zzyl.common.utils.file.FileUtils;
 import com.zzyl.framework.config.ServerConfig;
+import com.zzyl.oss.AliyunOSSOperator;
 
 /**
  * 通用请求处理
@@ -34,6 +35,9 @@ public class CommonController
 
     @Autowired
     private ServerConfig serverConfig;
+
+    @Autowired
+    private AliyunOSSOperator aliyunOSSOperator;
 
     private static final String FILE_DELIMETER = ",";
 
@@ -77,15 +81,11 @@ public class CommonController
     {
         try
         {
-            // 上传文件路径
-            String filePath = RuoYiConfig.getUploadPath();
-            // 上传并返回新文件名称
-            String fileName = FileUploadUtils.upload(filePath, file);
-            String url = serverConfig.getUrl() + fileName;
+            String url = aliyunOSSOperator.upload(file.getBytes(), file.getOriginalFilename());
             AjaxResult ajax = AjaxResult.success();
             ajax.put("url", url);
-            ajax.put("fileName", fileName);
-            ajax.put("newFileName", FileUtils.getName(fileName));
+            ajax.put("fileName", url);
+            ajax.put("newFileName", FileUtils.getName(url));
             ajax.put("originalFilename", file.getOriginalFilename());
             return ajax;
         }
