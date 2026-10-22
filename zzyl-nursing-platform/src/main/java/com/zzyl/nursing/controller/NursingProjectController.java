@@ -5,6 +5,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import java.util.List;
+import com.zzyl.nursing.vo.NursingProjectVo;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,14 @@ public class NursingProjectController extends BaseController
 {
     @Autowired
     private INursingProjectService nursingProjectService;
+
+    /** 护理计划表单使用的护理项目选项。 */
+    @GetMapping("/all")
+    @ApiOperation("查询所有护理项目")
+    public R<List<NursingProjectVo>> all()
+    {
+        return R.ok(nursingProjectService.selectAll());
+    }
 
 /**
  * 查询护理项目列表

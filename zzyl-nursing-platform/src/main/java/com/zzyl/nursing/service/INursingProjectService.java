@@ -2,6 +2,7 @@ package com.zzyl.nursing.service;
 
 import java.util.List;
 import com.zzyl.nursing.domain.NursingProject;
+import com.zzyl.nursing.vo.NursingProjectVo;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 
@@ -13,6 +14,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface INursingProjectService extends IService<NursingProject>
 {
+    List<NursingProjectVo> selectAll();
     /**
      * 查询护理项目
      * 

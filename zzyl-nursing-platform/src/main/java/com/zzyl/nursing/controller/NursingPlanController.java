@@ -15,12 +15,15 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.zzyl.common.annotation.Log;
 import com.zzyl.common.core.controller.BaseController;
 import com.zzyl.common.core.domain.AjaxResult;
 import com.zzyl.common.enums.BusinessType;
 import com.zzyl.nursing.domain.NursingPlan;
+import com.zzyl.nursing.dto.NursingPlanDto;
+import com.zzyl.nursing.vo.NursingPlanVo;
 import com.zzyl.nursing.service.INursingPlanService;
 import com.zzyl.common.utils.poi.ExcelUtil;
 import com.zzyl.common.core.page.TableDataInfo;
@@ -45,8 +48,12 @@ public class NursingPlanController extends BaseController
 @PreAuthorize("@ss.hasPermi('nursing:plan:list')")
 @GetMapping("/list")
 @ApiOperation("查询护理计划列表")
-    public TableDataInfo<List<NursingPlan>> list(@ApiParam(value = "护理计划查询条件") NursingPlan nursingPlan)
+    public TableDataInfo<List<NursingPlan>> list(@ApiParam(value = "护理计划查询条件") NursingPlan nursingPlan,
+                                                  @RequestParam(value = "name", required = false) String name)
     {
+        if (name != null) {
+            nursingPlan.setPlanName(name);
+        }
         startPage();
         List<NursingPlan> list = nursingPlanService.selectNursingPlanList(nursingPlan);
         return getDataTable(list);
@@ -72,7 +79,7 @@ public class NursingPlanController extends BaseController
     @PreAuthorize("@ss.hasPermi('nursing:plan:query')")
     @GetMapping(value = "/{id}")
     @ApiOperation("获取护理计划详细信息")
-    public R<NursingPlan> getInfo(@ApiParam(value = "护理计划ID", required = true)
+    public R<NursingPlanVo> getInfo(@ApiParam(value = "护理计划ID", required = true)
                                    @PathVariable("id") Long id)
     {
                 return R.ok(nursingPlanService.selectNursingPlanById(id));
@@ -85,7 +92,7 @@ public class NursingPlanController extends BaseController
     @Log(title = "护理计划", businessType = BusinessType.INSERT)
     @PostMapping
     @ApiOperation("新增护理计划")
-    public AjaxResult add(@ApiParam(value = "护理计划实体", required = true) @RequestBody NursingPlan nursingPlan)
+    public AjaxResult add(@ApiParam(value = "护理计划实体", required = true) @RequestBody NursingPlanDto nursingPlan)
     {
         return toAjax(nursingPlanService.insertNursingPlan(nursingPlan));
     }
@@ -97,7 +104,7 @@ public class NursingPlanController extends BaseController
     @Log(title = "护理计划", businessType = BusinessType.UPDATE)
     @PutMapping
     @ApiOperation("修改护理计划")
-    public AjaxResult edit(@ApiParam(value = "护理计划实体", required = true)  @RequestBody NursingPlan nursingPlan)
+    public AjaxResult edit(@ApiParam(value = "护理计划实体", required = true)  @RequestBody NursingPlanDto nursingPlan)
     {
         return toAjax(nursingPlanService.updateNursingPlan(nursingPlan));
     }
@@ -109,7 +116,7 @@ public class NursingPlanController extends BaseController
     @Log(title = "护理计划", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     @ApiOperation("删除护理计划")
-    public AjaxResult remove(@ApiParam(value = "护理计划ID数组", required = true) @PathVariable Long[] ids)
+    public AjaxResult remove(@ApiParam(value = "护理计划ID，支持逗号分隔多个ID", required = true) @PathVariable Long[] ids)
     {
         return toAjax(nursingPlanService.deleteNursingPlanByIds(ids));
     }

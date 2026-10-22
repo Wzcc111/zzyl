@@ -4,6 +4,8 @@ import java.util.List;
 import com.zzyl.nursing.domain.NursingProject;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
+import com.zzyl.nursing.vo.NursingProjectVo;
 
 /**
  * 护理项目Mapper接口
@@ -16,6 +18,8 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface NursingProjectMapper extends BaseMapper<NursingProject>
 {
+    @Select("select name as label, cast(id as char) as value from nursing_project where status = 1 order by order_no, id")
+    List<NursingProjectVo> selectAll();
     /**
      * 查询护理项目
      * 

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.zzyl.nursing.mapper.NursingProjectMapper;
 import com.zzyl.nursing.domain.NursingProject;
+import com.zzyl.nursing.vo.NursingProjectVo;
 import com.zzyl.nursing.service.INursingProjectService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import java.util.Arrays;
@@ -19,6 +20,10 @@ import java.util.Arrays;
 @Service
 public class NursingProjectServiceImpl extends ServiceImpl<NursingProjectMapper, NursingProject> implements INursingProjectService
 {
+    @Override
+    public List<NursingProjectVo> selectAll() {
+        return nursingProjectMapper.selectAll();
+    }
     @Autowired
     private NursingProjectMapper nursingProjectMapper;
 
