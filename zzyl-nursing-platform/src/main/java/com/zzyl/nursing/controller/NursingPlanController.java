@@ -59,6 +59,14 @@ public class NursingPlanController extends BaseController
         return getDataTable(list);
     }
 
+    /** 护理等级编辑框使用的护理计划下拉选项。 */
+    @PreAuthorize("@ss.hasPermi('nursing:level:list') or @ss.hasPermi('nursing:plan:list')")
+    @GetMapping("/all")
+    @ApiOperation("查询所有护理计划")
+    public R<List<NursingPlan>> all() {
+        return R.ok(nursingPlanService.selectNursingPlanList(new NursingPlan()));
+    }
+
     /**
      * 导出护理计划列表
      */

@@ -2,6 +2,7 @@ package com.zzyl.nursing.mapper;
 
 import java.util.List;
 import com.zzyl.nursing.domain.NursingLevel;
+import com.zzyl.nursing.vo.NursingLevelVo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -31,6 +32,9 @@ public interface NursingLevelMapper extends BaseMapper<NursingLevel>
      * @return 护理等级集合
      */
     public List<NursingLevel> selectNursingLevelList(NursingLevel nursingLevel);
+
+    /** 条件分页列表，包含护理计划名称。 */
+    List<NursingLevelVo> selectNursingLevelVoList(NursingLevel nursingLevel);
 
     /**
      * 新增护理等级

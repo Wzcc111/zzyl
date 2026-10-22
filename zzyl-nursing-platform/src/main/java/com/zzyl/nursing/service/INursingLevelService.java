@@ -2,6 +2,7 @@ package com.zzyl.nursing.service;
 
 import java.util.List;
 import com.zzyl.nursing.domain.NursingLevel;
+import com.zzyl.nursing.vo.NursingLevelVo;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 
@@ -28,6 +29,10 @@ public interface INursingLevelService extends IService<NursingLevel>
      * @return 护理等级集合
      */
     public List<NursingLevel> selectNursingLevelList(NursingLevel nursingLevel);
+
+    List<NursingLevelVo> selectNursingLevelVoList(NursingLevel nursingLevel);
+
+    List<NursingLevel> selectAllNursingLevels();
 
     /**
      * 新增护理等级

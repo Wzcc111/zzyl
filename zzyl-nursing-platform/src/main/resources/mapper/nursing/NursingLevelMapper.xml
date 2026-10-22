@@ -32,6 +32,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="description != null  and description != ''"> and description = #{description}</if>
         </where>
     </select>
+
+    <select id="selectNursingLevelVoList" parameterType="NursingLevel" resultType="com.zzyl.nursing.vo.NursingLevelVo">
+        SELECT nl.id, nl.name, nl.plan_id AS planId, np.plan_name AS planName,
+               nl.fee, nl.status, nl.description, nl.create_time AS createTime
+        FROM nursing_level nl
+        LEFT JOIN nursing_plan np ON np.id = nl.plan_id
+        <where>
+            <if test="name != null and name != ''">AND nl.name LIKE CONCAT('%', #{name}, '%')</if>
+            <if test="status != null">AND nl.status = #{status}</if>
+        </where>
+        ORDER BY nl.id DESC
+    </select>
     
     <select id="selectNursingLevelById" parameterType="Long" resultMap="NursingLevelResult">
         <include refid="selectNursingLevelVo"/>

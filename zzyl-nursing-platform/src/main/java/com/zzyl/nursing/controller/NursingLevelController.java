@@ -22,6 +22,7 @@ import com.zzyl.common.core.domain.AjaxResult;
 import com.zzyl.common.enums.BusinessType;
 import com.zzyl.nursing.domain.NursingLevel;
 import com.zzyl.nursing.service.INursingLevelService;
+import com.zzyl.nursing.vo.NursingLevelVo;
 import com.zzyl.common.utils.poi.ExcelUtil;
 import com.zzyl.common.core.page.TableDataInfo;
 
@@ -45,11 +46,19 @@ public class NursingLevelController extends BaseController
 @PreAuthorize("@ss.hasPermi('nursing:level:list')")
 @GetMapping("/list")
 @ApiOperation("查询护理等级列表")
-    public TableDataInfo<List<NursingLevel>> list(@ApiParam(value = "护理等级查询条件") NursingLevel nursingLevel)
+    public TableDataInfo<List<NursingLevelVo>> list(@ApiParam(value = "护理等级查询条件") NursingLevel nursingLevel)
     {
         startPage();
-        List<NursingLevel> list = nursingLevelService.selectNursingLevelList(nursingLevel);
+        List<NursingLevelVo> list = nursingLevelService.selectNursingLevelVoList(nursingLevel);
         return getDataTable(list);
+    }
+
+    /** 查询全部护理等级，供其他模块选择。 */
+    @PreAuthorize("@ss.hasPermi('nursing:level:list')")
+    @GetMapping("/listAll")
+    @ApiOperation("查询所有护理等级")
+    public R<List<NursingLevel>> listAll() {
+        return R.ok(nursingLevelService.selectAllNursingLevels());
     }
 
     /**
