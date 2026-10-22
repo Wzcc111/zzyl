@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zzyl.nursing.mapper.NursingProjectPlanMapper">
+    <resultMap id="projectPlanResult" type="com.zzyl.nursing.vo.NursingProjectPlanVo">
+        <id property="id" column="id"/>
+        <result property="planId" column="plan_id"/>
+        <result property="projectId" column="project_id"/>
+        <result property="executeTime" column="execute_time"/>
+        <result property="executeCycle" column="execute_cycle"/>
+        <result property="executeFrequency" column="execute_frequency"/>
+        <result property="remark" column="remark"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createBy" column="create_by"/>
+    </resultMap>
+
+    <select id="selectByPlanId" resultMap="projectPlanResult">
+        select id, plan_id, project_id, execute_time, execute_cycle, execute_frequency,
+               remark, create_time, create_by
+        from nursing_project_plan where plan_id = #{planId} order by id
+    </select>
+
+    <insert id="insertForPlan">
+        insert into nursing_project_plan
+            (plan_id, project_id, execute_time, execute_cycle, execute_frequency, remark)
+        values
+        <foreach collection="items" item="item" separator=",">
+            (#{planId}, #{item.projectId}, #{item.executeTime}, #{item.executeCycle},
+             #{item.executeFrequency}, #{item.remark})
+        </foreach>
+    </insert>
+
+    <delete id="deleteByPlanId">
+        delete from nursing_project_plan where plan_id = #{planId}
+    </delete>
+</mapper>

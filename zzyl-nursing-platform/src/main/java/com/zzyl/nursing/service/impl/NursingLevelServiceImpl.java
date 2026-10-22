@@ -1,7 +1,6 @@
 package com.zzyl.nursing.service.impl;
 
 import java.util.List;
-        import com.zzyl.common.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.zzyl.nursing.mapper.NursingLevelMapper;
@@ -10,6 +9,8 @@ import com.zzyl.nursing.service.INursingLevelService;
 import com.zzyl.nursing.vo.NursingLevelVo;
 import com.zzyl.nursing.mapper.NursingPlanMapper;
 import com.zzyl.common.exception.ServiceException;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.zzyl.nursing.domain.NursingPlan;
 import java.math.BigDecimal;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import java.util.Arrays;
@@ -121,14 +122,20 @@ public class NursingLevelServiceImpl extends ServiceImpl<NursingLevelMapper, Nur
             throw new ServiceException("护理等级不能为空");
         }
         if (creating && (level.getName() == null || level.getName().trim().isEmpty()
-                || level.getPlanId() == null || level.getFee() == null || level.getStatus() == null)) {
-            throw new ServiceException("等级名称、护理计划、费用和状态不能为空");
+                || level.getPlanId() == null || level.getFee() == null || level.getStatus() == null
+                || level.getDescription() == null || level.getDescription().trim().isEmpty())) {
+            throw new ServiceException("等级名称、护理计划、费用、状态和等级说明不能为空");
         }
-        if (level.getName() != null && (level.getName().trim().isEmpty() || level.getName().length() > 50)) {
-            throw new ServiceException("等级名称长度须为1到50个字符");
+        if (level.getName() != null && (level.getName().trim().isEmpty()
+                || level.getName().codePointCount(0, level.getName().length()) > 10
+                || containsEmoji(level.getName()))) {
+            throw new ServiceException("等级名称须为1到10个字符且不能包含表情");
         }
-        if (level.getPlanId() != null && nursingPlanMapper.selectById(level.getPlanId()) == null) {
-            throw new ServiceException("选择的护理计划不存在");
+        if (level.getPlanId() != null) {
+            NursingPlan plan = nursingPlanMapper.selectById(level.getPlanId());
+            if (plan == null || !Integer.valueOf(1).equals(plan.getStatus())) {
+                throw new ServiceException("请选择已启用的护理计划");
+            }
         }
         if (level.getFee() != null && (level.getFee().compareTo(BigDecimal.ZERO) < 0
                 || level.getFee().scale() > 2 || level.getFee().compareTo(new BigDecimal("99999999.99")) > 0)) {
@@ -137,8 +144,29 @@ public class NursingLevelServiceImpl extends ServiceImpl<NursingLevelMapper, Nur
         if (level.getStatus() != null && level.getStatus() != 0 && level.getStatus() != 1) {
             throw new ServiceException("护理等级状态只能为启用或禁用");
         }
-        if (level.getDescription() != null && level.getDescription().length() > 255) {
-            throw new ServiceException("等级说明不能超过255个字符");
+        if (level.getDescription() != null && (level.getDescription().trim().isEmpty()
+                || level.getDescription().codePointCount(0, level.getDescription().length()) > 50
+                || containsEmoji(level.getDescription()))) {
+            throw new ServiceException("等级说明须为1到50个字符且不能包含表情");
         }
+        if (level.getName() != null) {
+            level.setName(level.getName().trim());
+            LambdaQueryWrapper<NursingLevel> sameName = new LambdaQueryWrapper<NursingLevel>()
+                    .eq(NursingLevel::getName, level.getName());
+            if (level.getId() != null) {
+                sameName.ne(NursingLevel::getId, level.getId());
+            }
+            Long count = nursingLevelMapper.selectCount(sameName);
+            if (count != null && count > 0) {
+                throw new ServiceException("护理等级名称已存在");
+            }
+        }
+    }
+
+    private boolean containsEmoji(String value) {
+        return value.codePoints().anyMatch(codePoint ->
+                (codePoint >= 0x1F000 && codePoint <= 0x1FAFF)
+                || (codePoint >= 0x2600 && codePoint <= 0x27BF)
+                || codePoint == 0xFE0F || codePoint == 0x200D);
     }
 }
