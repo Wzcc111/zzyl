@@ -7,8 +7,10 @@ import com.zzyl.nursing.mapper.NursingLevelMapper;
 import com.zzyl.nursing.mapper.NursingPlanMapper;
 import com.zzyl.nursing.service.impl.NursingLevelServiceImpl;
 import com.zzyl.nursing.vo.NursingLevelVo;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import java.math.BigDecimal;
 import java.util.Collections;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -37,6 +40,21 @@ class NursingLevelServiceImplTest {
         when(levelMapper.selectNursingLevelVoList(filter)).thenReturn(Collections.singletonList(row));
 
         assertEquals("基础护理计划", service.selectNursingLevelVoList(filter).get(0).getPlanName());
+    }
+
+    @Test
+    void enabledListFiltersOutDisabledLevels() {
+        NursingLevel enabled = new NursingLevel();
+        enabled.setStatus(1);
+        when(levelMapper.selectList(any())).thenReturn(Collections.singletonList(enabled));
+
+        assertEquals(Collections.singletonList(enabled), service.selectEnabledNursingLevels());
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<QueryWrapper<NursingLevel>> wrapperCaptor = ArgumentCaptor.forClass(QueryWrapper.class);
+        verify(levelMapper).selectList(wrapperCaptor.capture());
+        assertTrue(wrapperCaptor.getValue().getSqlSegment().contains("status"));
+        assertTrue(wrapperCaptor.getValue().getParamNameValuePairs().containsValue(1));
     }
 
     @Test

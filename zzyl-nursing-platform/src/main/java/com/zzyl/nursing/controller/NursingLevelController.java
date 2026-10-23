@@ -61,6 +61,14 @@ public class NursingLevelController extends BaseController
         return R.ok(nursingLevelService.selectAllNursingLevels());
     }
 
+    /** Query enabled nursing levels for the admission form. */
+    @PreAuthorize("@ss.hasPermi('nursing:level:list')")
+    @GetMapping("/all")
+    @ApiOperation("查询已启用的护理等级")
+    public R<List<NursingLevel>> listAllEnabled() {
+        return R.ok(nursingLevelService.selectEnabledNursingLevels());
+    }
+
     /**
      * 导出护理等级列表
      */

@@ -10,6 +10,7 @@ import com.zzyl.nursing.vo.NursingLevelVo;
 import com.zzyl.nursing.mapper.NursingPlanMapper;
 import com.zzyl.common.exception.ServiceException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.zzyl.nursing.domain.NursingPlan;
 import java.math.BigDecimal;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -62,6 +63,13 @@ public class NursingLevelServiceImpl extends ServiceImpl<NursingLevelMapper, Nur
     @Override
     public List<NursingLevel> selectAllNursingLevels() {
         return nursingLevelMapper.selectList(null);
+    }
+
+    @Override
+    public List<NursingLevel> selectEnabledNursingLevels() {
+        QueryWrapper<NursingLevel> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("status", 1);
+        return nursingLevelMapper.selectList(queryWrapper);
     }
 
     /**

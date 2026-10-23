@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
  * 护理等级Service接口
- * 
+ *
  * @author wzc
  * @date 2026-10-20
  */
@@ -16,7 +16,7 @@ public interface INursingLevelService extends IService<NursingLevel>
 {
     /**
      * 查询护理等级
-     * 
+     *
      * @param id 护理等级主键
      * @return 护理等级
      */
@@ -24,7 +24,7 @@ public interface INursingLevelService extends IService<NursingLevel>
 
     /**
      * 查询护理等级列表
-     * 
+     *
      * @param nursingLevel 护理等级
      * @return 护理等级集合
      */
@@ -34,9 +34,12 @@ public interface INursingLevelService extends IService<NursingLevel>
 
     List<NursingLevel> selectAllNursingLevels();
 
+    /** Query enabled nursing levels for admission selection. */
+    List<NursingLevel> selectEnabledNursingLevels();
+
     /**
      * 新增护理等级
-     * 
+     *
      * @param nursingLevel 护理等级
      * @return 结果
      */
@@ -44,7 +47,7 @@ public interface INursingLevelService extends IService<NursingLevel>
 
     /**
      * 修改护理等级
-     * 
+     *
      * @param nursingLevel 护理等级
      * @return 结果
      */
@@ -52,7 +55,7 @@ public interface INursingLevelService extends IService<NursingLevel>
 
     /**
      * 批量删除护理等级
-     * 
+     *
      * @param ids 需要删除的护理等级主键集合
      * @return 结果
      */
@@ -60,7 +63,7 @@ public interface INursingLevelService extends IService<NursingLevel>
 
     /**
      * 删除护理等级信息
-     * 
+     *
      * @param id 护理等级主键
      * @return 结果
      */
