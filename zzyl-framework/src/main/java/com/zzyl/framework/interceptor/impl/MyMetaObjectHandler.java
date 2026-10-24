@@ -26,11 +26,15 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
     }
 
     public Long getLoginUser() {
-        LoginUser loginUser = SecurityUtils.getLoginUser();
+        try {
+            LoginUser loginUser = SecurityUtils.getLoginUser();
 
-        if (loginUser != null) {
-            return loginUser.getUserId();
+            if (loginUser != null) {
+                return loginUser.getUserId();
+            }
+            return 1L;
+        } catch (Exception e) {
+            return 1L;
         }
-        return 1L;
     }
 }
