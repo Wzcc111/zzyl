@@ -6,12 +6,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.zzyl.nursing.dto.NursingPlanDto;
 import com.zzyl.nursing.vo.NursingPlanVo;
 
-
 /**
  * 护理计划Service接口
  * 
- * @author wzc
- * @date 2026-10-20
+ * @author alexis
+ * @date 2025-06-02
  */
 public interface INursingPlanService extends IService<NursingPlan>
 {
@@ -34,18 +33,18 @@ public interface INursingPlanService extends IService<NursingPlan>
     /**
      * 新增护理计划
      * 
-     * @param nursingPlan 护理计划
+     * @param dto 护理计划
      * @return 结果
      */
-    public int insertNursingPlan(NursingPlanDto nursingPlan);
+    public int insertNursingPlan(NursingPlanDto dto);
 
     /**
      * 修改护理计划
      * 
-     * @param nursingPlan 护理计划
+     * @param dto 护理计划
      * @return 结果
      */
-    public int updateNursingPlan(NursingPlanDto nursingPlan);
+    public int updateNursingPlan(NursingPlanDto dto);
 
     /**
      * 批量删除护理计划
@@ -62,4 +61,11 @@ public interface INursingPlanService extends IService<NursingPlan>
      * @return 结果
      */
     public int deleteNursingPlanById(Long id);
+
+
+    /**
+     * 查询所有护理计划
+     * @return 护理计划列表
+     */
+    List<NursingPlan> getAllNursingPlans();
 }

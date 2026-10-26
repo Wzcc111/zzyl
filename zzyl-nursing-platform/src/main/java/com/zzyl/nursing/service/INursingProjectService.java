@@ -1,20 +1,20 @@
 package com.zzyl.nursing.service;
 
 import java.util.List;
-import com.zzyl.nursing.domain.NursingProject;
-import com.zzyl.nursing.vo.NursingProjectVo;
-import com.baomidou.mybatisplus.extension.service.IService;
 
+import com.zzyl.common.core.page.TableDataInfo;
+import com.zzyl.nursing.domain.NursingProject;
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.zzyl.nursing.vo.NursingProjectVo;
 
 /**
  * 护理项目Service接口
  * 
- * @author wzc
- * @date 2026-10-20
+ * @author alexis
+ * @date 2025-06-02
  */
 public interface INursingProjectService extends IService<NursingProject>
 {
-    List<NursingProjectVo> selectAll();
     /**
      * 查询护理项目
      * 
@@ -62,4 +62,21 @@ public interface INursingProjectService extends IService<NursingProject>
      * @return 结果
      */
     public int deleteNursingProjectById(Long id);
+
+    /**
+     * 查询所有护理项目
+     * @return  护理项目列表
+     */
+    List<NursingProjectVo> getAll();
+
+    /**
+     * 分页查询护理项目（小程序端）
+     * @param pageNum 当前页码
+     * @param pageSize  每页显示记录数
+     * @param name  护理项目名称
+     * @param status    状态
+     * @return  分页数据
+     */
+    TableDataInfo<NursingProject> pageByNameAndStatus(Integer pageNum, Integer pageSize, String name, Integer status);
+
 }

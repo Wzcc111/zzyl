@@ -1,116 +1,198 @@
 package com.zzyl.nursing.service.impl;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.zzyl.nursing.domain.NursingPlan;
+import java.util.Arrays;
+import java.util.List;
+
+import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.zzyl.common.constant.CacheConstants;
+import com.zzyl.common.utils.DateUtils;
+import com.zzyl.common.utils.bean.BeanUtils;
+import com.zzyl.nursing.domain.NursingLevel;
 import com.zzyl.nursing.domain.NursingProjectPlan;
 import com.zzyl.nursing.dto.NursingPlanDto;
-import com.zzyl.nursing.mapper.NursingPlanMapper;
 import com.zzyl.nursing.mapper.NursingProjectPlanMapper;
-import com.zzyl.nursing.service.INursingPlanService;
 import com.zzyl.nursing.vo.NursingPlanVo;
-import java.util.List;
-import org.springframework.beans.BeanUtils;
+import com.zzyl.nursing.vo.NursingProjectPlanVo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import com.zzyl.nursing.mapper.NursingPlanMapper;
+import com.zzyl.nursing.domain.NursingPlan;
+import com.zzyl.nursing.service.INursingPlanService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 护理计划Service业务层处理
+ * 
+ * @author alexis
+ * @date 2025-06-02
+ */
 @Service
-public class NursingPlanServiceImpl extends ServiceImpl<NursingPlanMapper, NursingPlan>
-        implements INursingPlanService {
+public class NursingPlanServiceImpl extends ServiceImpl<NursingPlanMapper, NursingPlan> implements INursingPlanService
+{
     @Autowired
     private NursingPlanMapper nursingPlanMapper;
 
     @Autowired
-    private NursingProjectPlanMapper projectPlanMapper;
+    private NursingProjectPlanMapper nursingProjectPlanMapper;
 
+    @Autowired
+    private RedisTemplate<Object, Object> redisTemplate;
+
+    /**
+     * 查询护理计划
+     * 
+     * @param id 护理计划主键
+     * @return 护理计划
+     */
     @Override
-    public NursingPlanVo selectNursingPlanById(Long id) {
-        NursingPlan plan = nursingPlanMapper.selectById(id);
-        if (plan == null) {
-            return null;
-        }
-        NursingPlanVo result = new NursingPlanVo();
-        BeanUtils.copyProperties(plan, result);
-        result.setProjectPlans(projectPlanMapper.selectByPlanId(id));
-        return result;
+    public NursingPlanVo selectNursingPlanById(Long id)
+    {
+        // 查询护理计划基本信息
+        NursingPlan nursingPlan = nursingPlanMapper.selectById(id);
+
+        // 查询护理计划关联的护理项目集合
+        List<NursingProjectPlanVo> projectPlans = nursingProjectPlanMapper.selectByNursingPlanId(id);
+
+        // 将两部分信息合并到一个对象中返回
+        NursingPlanVo nursingPlanVo = new NursingPlanVo();
+
+        BeanUtils.copyProperties(nursingPlan, nursingPlanVo);
+        nursingPlanVo.setProjectPlans(projectPlans);
+
+        return nursingPlanVo;
     }
 
+    /**
+     * 查询护理计划列表
+     * 
+     * @param nursingPlan 护理计划
+     * @return 护理计划
+     */
     @Override
-    public List<NursingPlan> selectNursingPlanList(NursingPlan plan) {
-        return nursingPlanMapper.selectNursingPlanList(plan);
+    public List<NursingPlan> selectNursingPlanList(NursingPlan nursingPlan)
+    {
+        return nursingPlanMapper.selectNursingPlanList(nursingPlan);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public int insertNursingPlan(NursingPlanDto dto) {
-        NursingPlan plan = toPlan(dto);
-        int changed = nursingPlanMapper.insert(plan);
-        if (changed != 1) {
-            return changed;
-        }
-        insertProjects(plan.getId(), dto.getProjectPlans());
-        return changed;
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public int updateNursingPlan(NursingPlanDto dto) {
-        if (dto.getId() == null) {
-            throw new IllegalArgumentException("护理计划ID不能为空");
-        }
-        int changed = nursingPlanMapper.updateById(toPlan(dto));
-        if (changed != 1) {
-            return changed;
-        }
-        // null 表示只改主表；空列表表示明确清空关联项目。
-        if (dto.getProjectPlans() != null) {
-            projectPlanMapper.deleteByPlanId(dto.getId());
-            insertProjects(dto.getId(), dto.getProjectPlans());
-        }
-        return changed;
-    }
-
+    /**
+     * 新增护理计划
+     * 
+     * @param dto 护理计划
+     * @return 结果
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public int deleteNursingPlanByIds(Long[] ids) {
-        if (ids == null || ids.length == 0) {
-            return 0;
-        }
-        int changed = 0;
-        for (Long id : ids) {
-            projectPlanMapper.deleteByPlanId(id);
-            changed += nursingPlanMapper.deleteById(id);
-        }
-        return changed;
+    public int insertNursingPlan(NursingPlanDto dto)
+    {
+        // 1.保存护理计划
+        NursingPlan nursingPlan = new NursingPlan();
+        BeanUtils.copyProperties(dto, nursingPlan);
+        nursingPlan.setCreateTime(DateUtils.getNowDate());
+
+        nursingPlanMapper.insert(nursingPlan);
+
+        // 2.批量保存护理计划和护理项目的对应关系
+        int count = nursingProjectPlanMapper.batchInsert(dto.getProjectPlans(), nursingPlan.getId());
+        // 删除缓存
+        deleteCache();
+        return count == 0 ? 0 : 1;
     }
 
+    /**
+     * 删除缓存
+     */
+    private void deleteCache() {
+        redisTemplate.delete(CacheConstants.NURSING_PLAN_ALL_KEY);
+    }
+
+    /**
+     * 修改护理计划
+     * 
+     * @param dto 护理计划
+     * @return 结果
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public int deleteNursingPlanById(Long id) {
-        projectPlanMapper.deleteByPlanId(id);
-        return nursingPlanMapper.deleteById(id);
+    public int updateNursingPlan(NursingPlanDto dto)
+    {
+        // 判断dto中的护理项目是否为空，如果不为空，先删除护理计划关联的所有护理项目，再重新批量保存最新的关联
+        if (dto.getProjectPlans() != null && !dto.getProjectPlans().isEmpty()) {
+            // 删除护理计划对应的护理项目列表
+            nursingProjectPlanMapper.deleteByNursingPlanId(dto.getId());
+
+            // 批量保存护理计划关联的护理项目
+            nursingProjectPlanMapper.batchInsert(dto.getProjectPlans(), dto.getId());
+        }
+
+        NursingPlan nursingPlan = new NursingPlan();
+        BeanUtils.copyProperties(dto, nursingPlan);
+
+        // 修改护理计划
+        int flag = nursingPlanMapper.updateById(nursingPlan);
+        // 删除缓存
+        deleteCache();
+        return flag;
     }
 
-    private NursingPlan toPlan(NursingPlanDto dto) {
-        NursingPlan plan = new NursingPlan();
-        BeanUtils.copyProperties(dto, plan);
-        return plan;
+    /**
+     * 批量删除护理计划
+     * 
+     * @param ids 需要删除的护理计划主键
+     * @return 结果
+     */
+    @Override
+    public int deleteNursingPlanByIds(Long[] ids)
+    {
+        boolean flag = removeByIds(Arrays.asList(ids));
+        // 删除缓存
+        deleteCache();
+        return flag ? 1 : 0;
     }
 
-    private void insertProjects(Long planId, List<NursingProjectPlan> items) {
-        if (items == null || items.isEmpty()) {
-            return;
+    /**
+     * 删除护理计划信息
+     * 
+     * @param id 护理计划主键
+     * @return 结果
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int deleteNursingPlanById(Long id)
+    {
+        // 删除护理计划关联的护理项目
+        nursingProjectPlanMapper.deleteByNursingPlanId(id);
+        // 删除护理计划
+        boolean flag = removeById(id);
+        // 删除缓存
+        deleteCache();
+        return flag ? 1 : 0;
+    }
+
+    /**
+     * 查询所有护理计划
+     *
+     * @return 护理计划列表
+     */
+    @Override
+    public List<NursingPlan> getAllNursingPlans() {
+        // 从缓存中查询所有护理计划
+        List<NursingPlan> list = (List<NursingPlan>) redisTemplate.opsForValue().get(CacheConstants.NURSING_PLAN_ALL_KEY);
+
+        // 如果缓存中查到了，直接返回
+        if (ObjectUtil.isNotEmpty(list)) {
+            return list;
         }
-        for (NursingProjectPlan item : items) {
-            if (item == null || item.getProjectId() == null || item.getExecuteTime() == null
-                    || item.getExecuteTime().trim().isEmpty() || item.getExecuteCycle() == null
-                    || item.getExecuteFrequency() == null) {
-                throw new IllegalArgumentException("护理项目及执行安排不能为空");
-            }
-        }
-        int inserted = projectPlanMapper.insertForPlan(planId, items);
-        if (inserted != items.size()) {
-            throw new IllegalStateException("护理项目保存数量不一致");
-        }
+
+        // 如果缓存中没有查到，则从数据库中查询，并将查询到的结果放入缓存中
+        LambdaQueryWrapper<NursingPlan> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(NursingPlan::getStatus, 1);
+        list = list(queryWrapper);
+
+        // 将查询到的结果放入缓存
+        redisTemplate.opsForValue().set(CacheConstants.NURSING_PLAN_ALL_KEY, list);
+        return list;
     }
 }

@@ -1,26 +1,27 @@
 package com.zzyl.nursing.service.impl;
 
+import java.util.Arrays;
 import java.util.List;
+
+import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson2.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.zzyl.common.constant.CacheConstants;
+import com.zzyl.common.utils.DateUtils;
+import com.zzyl.nursing.vo.NursingLevelVo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import com.zzyl.nursing.mapper.NursingLevelMapper;
 import com.zzyl.nursing.domain.NursingLevel;
 import com.zzyl.nursing.service.INursingLevelService;
-import com.zzyl.nursing.vo.NursingLevelVo;
-import com.zzyl.nursing.mapper.NursingPlanMapper;
-import com.zzyl.common.exception.ServiceException;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.zzyl.nursing.domain.NursingPlan;
-import java.math.BigDecimal;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import java.util.Arrays;
 
 /**
  * 护理等级Service业务层处理
- *
- * @author wzc
- * @date 2026-10-20
+ * 
+ * @author alexis
+ * @date 2025-06-02
  */
 @Service
 public class NursingLevelServiceImpl extends ServiceImpl<NursingLevelMapper, NursingLevel> implements INursingLevelService
@@ -29,23 +30,23 @@ public class NursingLevelServiceImpl extends ServiceImpl<NursingLevelMapper, Nur
     private NursingLevelMapper nursingLevelMapper;
 
     @Autowired
-    private NursingPlanMapper nursingPlanMapper;
+    private RedisTemplate<Object, Object> redisTemplate;
 
     /**
      * 查询护理等级
-     *
+     * 
      * @param id 护理等级主键
      * @return 护理等级
      */
     @Override
     public NursingLevel selectNursingLevelById(Long id)
     {
-                return getById(id);
+        return getById(id);
     }
 
     /**
      * 查询护理等级列表
-     *
+     * 
      * @param nursingLevel 护理等级
      * @return 护理等级
      */
@@ -55,126 +56,106 @@ public class NursingLevelServiceImpl extends ServiceImpl<NursingLevelMapper, Nur
         return nursingLevelMapper.selectNursingLevelList(nursingLevel);
     }
 
-    @Override
-    public List<NursingLevelVo> selectNursingLevelVoList(NursingLevel nursingLevel) {
-        return nursingLevelMapper.selectNursingLevelVoList(nursingLevel);
-    }
-
-    @Override
-    public List<NursingLevel> selectAllNursingLevels() {
-        return nursingLevelMapper.selectList(null);
-    }
-
-    @Override
-    public List<NursingLevel> selectEnabledNursingLevels() {
-        QueryWrapper<NursingLevel> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("status", 1);
-        return nursingLevelMapper.selectList(queryWrapper);
-    }
-
     /**
      * 新增护理等级
-     *
+     * 
      * @param nursingLevel 护理等级
      * @return 结果
      */
     @Override
     public int insertNursingLevel(NursingLevel nursingLevel)
     {
-        validateLevel(nursingLevel, true);
-        return nursingLevelMapper.insert(nursingLevel);
+        boolean flag = save(nursingLevel);
+        // 删除缓存
+        deleteCache();
+        return flag ? 1 : 0;
+    }
+
+    /**
+     * 删除缓存
+     */
+    private void deleteCache() {
+        redisTemplate.delete(CacheConstants.NURSING_LEVEL_ALL_KEY);
     }
 
     /**
      * 修改护理等级
-     *
+     * 
      * @param nursingLevel 护理等级
      * @return 结果
      */
     @Override
     public int updateNursingLevel(NursingLevel nursingLevel)
     {
-        if (nursingLevel == null || nursingLevel.getId() == null) {
-            throw new ServiceException("护理等级ID不能为空");
-        }
-        validateLevel(nursingLevel, false);
-        return nursingLevelMapper.updateById(nursingLevel);
+        boolean flag = updateById(nursingLevel);
+        // 删除缓存
+        deleteCache();
+        return flag ? 1 : 0;
     }
 
     /**
      * 批量删除护理等级
-     *
+     * 
      * @param ids 需要删除的护理等级主键
      * @return 结果
      */
     @Override
     public int deleteNursingLevelByIds(Long[] ids)
     {
-                return removeByIds(Arrays.asList(ids)) ? 1 : 0;
+        boolean flag = removeByIds(Arrays.asList(ids));
+        // 删除缓存
+        deleteCache();
+        return flag ? 1 : 0;
     }
 
     /**
      * 删除护理等级信息
-     *
+     * 
      * @param id 护理等级主键
      * @return 结果
      */
     @Override
     public int deleteNursingLevelById(Long id)
     {
-                return removeById(id) ? 1 : 0;
+        boolean flag = removeById(id);
+        // 删除缓存
+        deleteCache();
+        return flag ? 1 : 0;
     }
 
-    private void validateLevel(NursingLevel level, boolean creating) {
-        if (level == null) {
-            throw new ServiceException("护理等级不能为空");
-        }
-        if (creating && (level.getName() == null || level.getName().trim().isEmpty()
-                || level.getPlanId() == null || level.getFee() == null || level.getStatus() == null
-                || level.getDescription() == null || level.getDescription().trim().isEmpty())) {
-            throw new ServiceException("等级名称、护理计划、费用、状态和等级说明不能为空");
-        }
-        if (level.getName() != null && (level.getName().trim().isEmpty()
-                || level.getName().codePointCount(0, level.getName().length()) > 10
-                || containsEmoji(level.getName()))) {
-            throw new ServiceException("等级名称须为1到10个字符且不能包含表情");
-        }
-        if (level.getPlanId() != null) {
-            NursingPlan plan = nursingPlanMapper.selectById(level.getPlanId());
-            if (plan == null || !Integer.valueOf(1).equals(plan.getStatus())) {
-                throw new ServiceException("请选择已启用的护理计划");
-            }
-        }
-        if (level.getFee() != null && (level.getFee().compareTo(BigDecimal.ZERO) < 0
-                || level.getFee().scale() > 2 || level.getFee().compareTo(new BigDecimal("99999999.99")) > 0)) {
-            throw new ServiceException("护理费用须为非负且最多两位小数");
-        }
-        if (level.getStatus() != null && level.getStatus() != 0 && level.getStatus() != 1) {
-            throw new ServiceException("护理等级状态只能为启用或禁用");
-        }
-        if (level.getDescription() != null && (level.getDescription().trim().isEmpty()
-                || level.getDescription().codePointCount(0, level.getDescription().length()) > 50
-                || containsEmoji(level.getDescription()))) {
-            throw new ServiceException("等级说明须为1到50个字符且不能包含表情");
-        }
-        if (level.getName() != null) {
-            level.setName(level.getName().trim());
-            LambdaQueryWrapper<NursingLevel> sameName = new LambdaQueryWrapper<NursingLevel>()
-                    .eq(NursingLevel::getName, level.getName());
-            if (level.getId() != null) {
-                sameName.ne(NursingLevel::getId, level.getId());
-            }
-            Long count = nursingLevelMapper.selectCount(sameName);
-            if (count != null && count > 0) {
-                throw new ServiceException("护理等级名称已存在");
-            }
-        }
+    /**
+     * 查询护理等级Vo列表
+     *
+     * @param nursingLevel 条件
+     * @return 结果
+     */
+    @Override
+    public List<NursingLevelVo> selectNursingLevelVoList(NursingLevel nursingLevel) {
+        return nursingLevelMapper.selectNursingLevelVoList(nursingLevel);
     }
 
-    private boolean containsEmoji(String value) {
-        return value.codePoints().anyMatch(codePoint ->
-                (codePoint >= 0x1F000 && codePoint <= 0x1FAFF)
-                || (codePoint >= 0x2600 && codePoint <= 0x27BF)
-                || codePoint == 0xFE0F || codePoint == 0x200D);
+    /**
+     * 查询所有护理等级
+     *
+     * @return 结果
+     */
+    @Override
+    public List<NursingLevel> listAll() {
+        // 从缓存中查询所有护理等级
+        List<NursingLevel> list = (List<NursingLevel>) redisTemplate.opsForValue().get(CacheConstants.NURSING_LEVEL_ALL_KEY);
+
+        // 如果缓存中查到了，直接返回
+        if (ObjectUtil.isNotEmpty(list)) {
+            return list;
+        }
+
+        // 如果缓存中没有查到，则从数据库中查询，并将查询到的结果放入缓存中
+        LambdaQueryWrapper<NursingLevel> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(NursingLevel::getStatus, 1);
+        list = list(queryWrapper);
+
+        // 将查询到的结果放入缓存
+        redisTemplate.opsForValue().set(CacheConstants.NURSING_LEVEL_ALL_KEY, list);
+        return list;
     }
 }

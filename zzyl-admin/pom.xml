@@ -30,18 +30,24 @@
             <optional>true</optional> <!-- 表示依赖不会传递 -->
         </dependency>
 
-<!--        &lt;!&ndash; swagger3&ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>io.springfox</groupId>-->
-<!--            <artifactId>springfox-boot-starter</artifactId>-->
-<!--        </dependency>-->
+        <!-- 单元测试起步依赖-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+        </dependency>
 
-<!--        &lt;!&ndash; 防止进入swagger页面报类型转换错误，排除3.0.0中的引用，手动增加1.6.2版本 &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>io.swagger</groupId>-->
-<!--            <artifactId>swagger-models</artifactId>-->
-<!--            <version>1.6.2</version>-->
-<!--        </dependency>-->
+        <!--        &lt;!&ndash; swagger3&ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>io.springfox</groupId>-->
+        <!--            <artifactId>springfox-boot-starter</artifactId>-->
+        <!--        </dependency>-->
+
+        <!--        &lt;!&ndash; 防止进入swagger页面报类型转换错误，排除3.0.0中的引用，手动增加1.6.2版本 &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>io.swagger</groupId>-->
+        <!--            <artifactId>swagger-models</artifactId>-->
+        <!--            <version>1.6.2</version>-->
+        <!--        </dependency>-->
 
         <!-- ruoyi-springboot2 / swagger knife4j 配置 -->
         <dependency>
