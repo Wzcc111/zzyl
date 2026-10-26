@@ -3,7 +3,7 @@
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.zzyl.nursing.mapper.FloorMapper">
-
+    
     <resultMap type="Floor" id="FloorResult">
         <result property="id"    column="id"    />
         <result property="name"    column="name"    />
@@ -21,12 +21,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectFloorList" parameterType="Floor" resultMap="FloorResult">
         <include refid="selectFloorVo"/>
-        <where>
+        <where>  
             <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
             <if test="code != null "> and code = #{code}</if>
         </where>
     </select>
-
+    
     <select id="selectFloorById" parameterType="Long" resultMap="FloorResult">
         <include refid="selectFloorVo"/>
         where id = #{id}
@@ -73,7 +73,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </delete>
 
     <delete id="deleteFloorByIds" parameterType="String">
-        delete from floor where id in
+        delete from floor where id in 
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
@@ -91,29 +91,37 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <resultMap id="TreeVoResultMap" type="com.zzyl.nursing.vo.TreeVo">
-        <id column="fid" property="value"/>
-        <result column="floor_name" property="label"/>
+        <id property="value" column="fid"/>
+        <result property="label" column="fname"/>
         <collection property="children" ofType="com.zzyl.nursing.vo.TreeVo">
-            <id column="rid" property="value"/>
-            <result column="room_code" property="label"/>
+            <id property="value" column="rid"/>
+            <result property="label" column="rname"/>
             <collection property="children" ofType="com.zzyl.nursing.vo.TreeVo">
-                <id column="bid" property="value"/>
-                <result column="bed_number" property="label"/>
+                <id property="value" column="bid"/>
+                <result property="label" column="bname"/>
             </collection>
         </collection>
     </resultMap>
 
     <select id="getRoomAndBedByBedStatus" resultMap="TreeVoResultMap">
-        select f.id fid,
-               f.name floor_name,
-               r.id rid,
-               r.code room_code,
-               b.id bid,
-               b.bed_number
-        from floor f
-                 inner join room r on f.id = r.floor_id and r.is_deleted = 0
-                 inner join bed b on r.id = b.room_id
+        select f.name fname, f.id fid,
+               r.code rname, r.id rid,
+               b.bed_number bname, b.id bid
+        from floor f left join room r on r.floor_id = f.id
+                left join bed b on b.room_id = r.id
         where b.bed_status = #{status}
-        order by f.code, r.sort, b.sort
+        order by f.id, r.id, b.id
+    </select>
+
+    <select id="getAllFloorsWithDevice" resultType="com.zzyl.nursing.vo.FloorVo">
+        select f.id, f.name, f.code
+        from floor f
+                 left join room r on f.id = r.floor_id
+                 left join bed b on r.id = b.room_id
+                 left join device rd on rd.location_type = 1 and rd.physical_location_type = 1 and rd.binding_location = r.id
+                 left join device bd on bd.location_type = 1 and bd.physical_location_type = 2 and bd.binding_location = b.id
+        where rd.id is not null
+           or bd.id is not null
+        group by f.id
     </select>
 </mapper>

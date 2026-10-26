@@ -3,7 +3,7 @@
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.zzyl.nursing.mapper.ElderMapper">
-
+    
     <resultMap type="Elder" id="ElderResult">
         <result property="id"    column="id"    />
         <result property="name"    column="name"    />
@@ -31,7 +31,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectElderList" parameterType="Elder" resultMap="ElderResult">
         <include refid="selectElderVo"/>
-        <where>
+        <where>  
             <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
             <if test="image != null  and image != ''"> and image = #{image}</if>
             <if test="idCardNo != null  and idCardNo != ''"> and id_card_no = #{idCardNo}</if>
@@ -46,7 +46,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="bedId != null "> and bed_id = #{bedId}</if>
         </where>
     </select>
-
+    
     <select id="selectElderById" parameterType="Long" resultMap="ElderResult">
         <include refid="selectElderVo"/>
         where id = #{id}
@@ -123,7 +123,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </delete>
 
     <delete id="deleteElderByIds" parameterType="String">
-        delete from elder where id in
+        delete from elder where id in 
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>

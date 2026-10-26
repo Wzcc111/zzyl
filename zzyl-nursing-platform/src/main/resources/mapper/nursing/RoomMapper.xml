@@ -3,7 +3,7 @@
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.zzyl.nursing.mapper.RoomMapper">
-
+    
     <resultMap type="Room" id="RoomResult">
         <result property="id"    column="id"    />
         <result property="code"    column="code"    />
@@ -24,7 +24,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectRoomList" parameterType="Room" resultMap="RoomResult">
         <include refid="selectRoomVo"/>
-        <where>
+        <where>  
             <if test="code != null  and code != ''"> and code = #{code}</if>
             <if test="sort != null "> and sort = #{sort}</if>
             <if test="typeName != null  and typeName != ''"> and type_name like concat('%', #{typeName}, '%')</if>
@@ -32,7 +32,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="isDeleted != null "> and is_deleted = #{isDeleted}</if>
         </where>
     </select>
-
+    
     <select id="selectRoomById" parameterType="Long" resultMap="RoomResult">
         <include refid="selectRoomVo"/>
         where id = #{id}
@@ -120,6 +120,69 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by r.sort, r.create_time desc
     </select>
 
+    <select id="getRoomById" resultType="com.zzyl.nursing.vo.RoomVo">
+        select f.name floorName, f.id floorId, r.id roomId, r.code, rt.price
+        from floor f
+                 left join room r on f.id = r.floor_id
+                 left join room_type rt on rt.name = r.type_name
+        where r.id = #{id}
+    </select>
+
+    <resultMap id="roomVoDeviceByFloorIdResultMap" type="com.zzyl.nursing.vo.RoomVo">
+        <id column="id" property="id"/>
+        <result column="code" property="code"/>
+        <result column="floor_id" property="floorId"/>
+        <collection property="bedVoList" ofType="com.zzyl.nursing.vo.BedVo">
+            <id column="bid" property="id"/>
+            <result column="b_bed_number" property="bedNumber"/>
+            <result column="b_bed_status" property="bedStatus"/>
+            <result column="b_room_id" property="roomId"/>
+            <result column="e_name" property="ename"/>
+            <result column="elderId" property="elderId"/>
+            <collection property="deviceVos" ofType="com.zzyl.nursing.vo.DeviceInfo">
+                <id column="bd_id" property="id"/>
+                <result column="bd_iot_id" property="iotId"/>
+                <result column="bd_device_name" property="deviceName"/>
+                <result column="bd_product_key" property="productKey"/>
+                <result column="bd_product_name" property="productName"/>
+            </collection>
+        </collection>
+        <collection property="deviceVos" ofType="com.zzyl.nursing.vo.DeviceInfo">
+            <id column="rd_id" property="id"/>
+            <result column="rd_iot_id" property="iotId"/>
+            <result column="rd_device_name" property="deviceName"/>
+            <result column="rd_product_key" property="productKey"/>
+            <result column="rd_product_name" property="productName"/>
+        </collection>
+    </resultMap>
+
+    <select id="getRoomsWithDeviceByFloorId" resultMap="roomVoDeviceByFloorIdResultMap">
+        select r.*,
+               b.id            bid,
+               b.bed_number    b_bed_number,
+               b.bed_status    b_bed_status,
+               b.room_id       b_room_id,
+               e.name          e_name,
+               e.id            elderId,
+               bd.id           bd_id,
+               bd.iot_id       bd_iot_id,
+               bd.device_name  bd_device_name,
+               bd.product_key  bd_product_key,
+               bd.product_name bd_product_name,
+               rd.id           rd_id,
+               rd.iot_id       rd_iot_id,
+               rd.device_name  rd_device_name,
+               rd.product_key  rd_product_key,
+               rd.product_name rd_product_name
+        from room r
+                 left join bed b on r.id = b.room_id
+                 left join elder e on b.id = e.bed_id
+                 left join device rd on rd.location_type = 1 and rd.physical_location_type = 1 and rd.binding_location = r.id
+                 left join device bd on bd.location_type = 1 and bd.physical_location_type = 2 and bd.binding_location = b.id
+        where r.floor_id = #{floorId}
+          and (rd.id is not null or bd.id is not null)
+    </select>
+
 
     <insert id="insertRoom" parameterType="Room" useGeneratedKeys="true" keyProperty="id">
         insert into room
@@ -171,22 +234,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </delete>
 
     <delete id="deleteRoomByIds" parameterType="String">
-        delete from room where id in
+        delete from room where id in 
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
     </delete>
-
-    <select id="getRoomById" resultType="com.zzyl.nursing.vo.RoomVo">
-        select f.name floorName,
-               cast(f.id as char) floorId,
-               cast(r.id as char) roomId,
-               r.code,
-               cast(rt.price as char) price
-        from room r
-                 inner join floor f on f.id = r.floor_id
-                 left join room_type rt on rt.name = r.type_name
-        where r.id = #{id}
-          and r.is_deleted = 0
-    </select>
 </mapper>

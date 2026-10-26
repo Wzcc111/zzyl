@@ -3,7 +3,7 @@
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.zzyl.nursing.mapper.CheckInMapper">
-
+    
     <resultMap type="CheckIn" id="CheckInResult">
         <result property="id"    column="id"    />
         <result property="elderName"    column="elder_name"    />
@@ -28,7 +28,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectCheckInList" parameterType="CheckIn" resultMap="CheckInResult">
         <include refid="selectCheckInVo"/>
-        <where>
+        <where>  
             <if test="elderName != null  and elderName != ''"> and elder_name like concat('%', #{elderName}, '%')</if>
             <if test="elderId != null "> and elder_id = #{elderId}</if>
             <if test="idCardNo != null  and idCardNo != ''"> and id_card_no = #{idCardNo}</if>
@@ -40,7 +40,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="sortOrder != null "> and sort_order = #{sortOrder}</if>
         </where>
     </select>
-
+    
     <select id="selectCheckInById" parameterType="Long" resultMap="CheckInResult">
         <include refid="selectCheckInVo"/>
         where id = #{id}
@@ -108,7 +108,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </delete>
 
     <delete id="deleteCheckInByIds" parameterType="String">
-        delete from check_in where id in
+        delete from check_in where id in 
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>

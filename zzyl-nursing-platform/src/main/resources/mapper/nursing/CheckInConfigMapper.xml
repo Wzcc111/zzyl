@@ -3,7 +3,7 @@
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.zzyl.nursing.mapper.CheckInConfigMapper">
-
+    
     <resultMap type="CheckInConfig" id="CheckInConfigResult">
         <result property="id"    column="id"    />
         <result property="checkInId"    column="check_in_id"    />
@@ -31,7 +31,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectCheckInConfigList" parameterType="CheckInConfig" resultMap="CheckInConfigResult">
         <include refid="selectCheckInConfigVo"/>
-        <where>
+        <where>  
             <if test="checkInId != null "> and check_in_id = #{checkInId}</if>
             <if test="nursingLevelId != null "> and nursing_level_id = #{nursingLevelId}</if>
             <if test="nursingLevelName != null  and nursingLevelName != ''"> and nursing_level_name like concat('%', #{nursingLevelName}, '%')</if>
@@ -46,7 +46,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="sortOrder != null "> and sort_order = #{sortOrder}</if>
         </where>
     </select>
-
+    
     <select id="selectCheckInConfigById" parameterType="Long" resultMap="CheckInConfigResult">
         <include refid="selectCheckInConfigVo"/>
         where id = #{id}
@@ -123,7 +123,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </delete>
 
     <delete id="deleteCheckInConfigByIds" parameterType="String">
-        delete from check_in_config where id in
+        delete from check_in_config where id in 
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>

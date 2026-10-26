@@ -8,11 +8,9 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 护理计划Mapper接口
  * 
- * @author wzc
- * @date 2026-10-20
+ * @author alexis
+ * @date 2025-06-02
  */
-
-
 @Mapper
 public interface NursingPlanMapper extends BaseMapper<NursingPlan>
 {

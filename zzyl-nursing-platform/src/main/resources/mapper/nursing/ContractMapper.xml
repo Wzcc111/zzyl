@@ -3,7 +3,7 @@
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.zzyl.nursing.mapper.ContractMapper">
-
+    
     <resultMap type="Contract" id="ContractResult">
         <result property="id"    column="id"    />
         <result property="elderId"    column="elder_id"    />
@@ -34,7 +34,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectContractList" parameterType="Contract" resultMap="ContractResult">
         <include refid="selectContractVo"/>
-        <where>
+        <where>  
             <if test="elderId != null "> and elder_id = #{elderId}</if>
             <if test="contractName != null  and contractName != ''"> and contract_name like concat('%', #{contractName}, '%')</if>
             <if test="contractNumber != null  and contractNumber != ''"> and contract_number = #{contractNumber}</if>
@@ -52,7 +52,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="sortOrder != null "> and sort_order = #{sortOrder}</if>
         </where>
     </select>
-
+    
     <select id="selectContractById" parameterType="Long" resultMap="ContractResult">
         <include refid="selectContractVo"/>
         where id = #{id}
@@ -138,7 +138,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </delete>
 
     <delete id="deleteContractByIds" parameterType="String">
-        delete from contract where id in
+        delete from contract where id in 
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>

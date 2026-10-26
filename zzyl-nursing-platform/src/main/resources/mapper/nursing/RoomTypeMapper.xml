@@ -3,7 +3,7 @@
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.zzyl.nursing.mapper.RoomTypeMapper">
-
+    
     <resultMap type="RoomType" id="RoomTypeResult">
         <result property="id"    column="id"    />
         <result property="name"    column="name"    />
@@ -25,7 +25,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectRoomTypeList" parameterType="RoomType" resultMap="RoomTypeResult">
         <include refid="selectRoomTypeVo"/>
-        <where>
+        <where>  
             <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
             <if test="bedCount != null "> and bed_count = #{bedCount}</if>
             <if test="price != null "> and price = #{price}</if>
@@ -34,12 +34,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="status != null "> and status = #{status}</if>
         </where>
     </select>
-
+    
     <select id="selectRoomTypeById" parameterType="Long" resultMap="RoomTypeResult">
         <include refid="selectRoomTypeVo"/>
         where id = #{id}
     </select>
-
+        
     <insert id="insertRoomType" parameterType="RoomType" useGeneratedKeys="true" keyProperty="id">
         insert into room_type
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -93,7 +93,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </delete>
 
     <delete id="deleteRoomTypeByIds" parameterType="String">
-        delete from room_type where id in
+        delete from room_type where id in 
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>

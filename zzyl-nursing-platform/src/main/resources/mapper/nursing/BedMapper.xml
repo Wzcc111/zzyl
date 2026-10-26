@@ -3,7 +3,7 @@
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.zzyl.nursing.mapper.BedMapper">
-
+    
     <resultMap type="Bed" id="BedResult">
         <result property="id"    column="id"    />
         <result property="bedNumber"    column="bed_number"    />
@@ -23,19 +23,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectBedList" parameterType="Bed" resultMap="BedResult">
         <include refid="selectBedVo"/>
-        <where>
+        <where>  
             <if test="bedNumber != null  and bedNumber != ''"> and bed_number = #{bedNumber}</if>
             <if test="bedStatus != null "> and bed_status = #{bedStatus}</if>
             <if test="sort != null "> and sort = #{sort}</if>
             <if test="roomId != null "> and room_id = #{roomId}</if>
         </where>
     </select>
-
+    
     <select id="selectBedById" parameterType="Long" resultMap="BedResult">
         <include refid="selectBedVo"/>
         where id = #{id}
     </select>
-
+        
     <insert id="insertBed" parameterType="Bed" useGeneratedKeys="true" keyProperty="id">
         insert into bed
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -83,7 +83,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </delete>
 
     <delete id="deleteBedByIds" parameterType="String">
-        delete from bed where id in
+        delete from bed where id in 
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
