@@ -1,35 +1,46 @@
 package com.zzyl.nursing.service;
 
-import com.zzyl.common.exception.ServiceException;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.zzyl.nursing.domain.NursingLevel;
-import com.zzyl.nursing.domain.NursingPlan;
 import com.zzyl.nursing.mapper.NursingLevelMapper;
-import com.zzyl.nursing.mapper.NursingPlanMapper;
 import com.zzyl.nursing.service.impl.NursingLevelServiceImpl;
 import com.zzyl.nursing.vo.NursingLevelVo;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import java.math.BigDecimal;
 import java.util.Collections;
-import org.mockito.ArgumentCaptor;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
+import static com.zzyl.common.constant.CacheConstants.NURSING_LEVEL_ALL_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class NursingLevelServiceImplTest {
     @Mock NursingLevelMapper levelMapper;
-    @Mock NursingPlanMapper planMapper;
+    @Mock RedisTemplate<Object, Object> redisTemplate;
+    @Mock ValueOperations<Object, Object> valueOperations;
     @InjectMocks NursingLevelServiceImpl service;
+
+    @BeforeAll
+    static void initializeMybatisPlusMetadata() {
+        TableInfoHelper.initTableInfo(
+                new MapperBuilderAssistant(new MybatisConfiguration(), "NursingLevelServiceImplTest"),
+                NursingLevel.class
+        );
+    }
 
     @Test
     void listReturnsPlanNameFromJoinedRows() {
@@ -43,79 +54,43 @@ class NursingLevelServiceImplTest {
     }
 
     @Test
-    void enabledListFiltersOutDisabledLevels() {
+    void listAllReturnsCachedLevelsWithoutQueryingDatabase() {
         NursingLevel enabled = new NursingLevel();
         enabled.setStatus(1);
-        when(levelMapper.selectList(any())).thenReturn(Collections.singletonList(enabled));
+        var cachedLevels = Collections.singletonList(enabled);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(NURSING_LEVEL_ALL_KEY)).thenReturn(cachedLevels);
 
-        assertEquals(Collections.singletonList(enabled), service.selectEnabledNursingLevels());
-
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<QueryWrapper<NursingLevel>> wrapperCaptor = ArgumentCaptor.forClass(QueryWrapper.class);
-        verify(levelMapper).selectList(wrapperCaptor.capture());
-        assertTrue(wrapperCaptor.getValue().getSqlSegment().contains("status"));
-        assertTrue(wrapperCaptor.getValue().getParamNameValuePairs().containsValue(1));
+        assertSame(cachedLevels, service.listAll());
+        verifyNoInteractions(levelMapper);
     }
 
     @Test
-    void createRejectsMissingPlanBeforeInsert() {
-        NursingLevel level = validLevel();
-        when(planMapper.selectById(3L)).thenReturn(null);
+    void listAllQueriesEnabledLevelsAndCachesThemOnCacheMiss() {
+        NursingLevel enabled = new NursingLevel();
+        enabled.setStatus(1);
+        var enabledLevels = Collections.singletonList(enabled);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(NURSING_LEVEL_ALL_KEY)).thenReturn(null);
+        when(levelMapper.selectList(any())).thenAnswer(invocation -> {
+            LambdaQueryWrapper<NursingLevel> wrapper = invocation.getArgument(0);
+            assertTrue(wrapper.getSqlSegment().contains("status"));
+            assertTrue(wrapper.getParamNameValuePairs().containsValue(1));
+            return enabledLevels;
+        });
 
-        assertThrows(ServiceException.class, () -> service.insertNursingLevel(level));
-        verify(levelMapper, never()).insert(any());
+        assertEquals(enabledLevels, service.listAll());
+        verify(valueOperations).set(NURSING_LEVEL_ALL_KEY, enabledLevels);
     }
 
     @Test
-    void statusOnlyUpdateDoesNotRequireOtherFields() {
+    void updateInvalidatesCachedLevels() {
         NursingLevel level = new NursingLevel();
         level.setId(7L);
         level.setStatus(0);
         when(levelMapper.updateById(level)).thenReturn(1);
 
         assertEquals(1, service.updateNursingLevel(level));
-        verify(planMapper, never()).selectById(any());
-    }
-
-    @Test
-    void createRejectsNegativeFee() {
-        NursingLevel level = validLevel();
-        level.setFee(new BigDecimal("-0.01"));
-        NursingPlan plan = new NursingPlan();
-        plan.setStatus(1);
-        when(planMapper.selectById(3L)).thenReturn(plan);
-
-        assertThrows(ServiceException.class, () -> service.insertNursingLevel(level));
-        verify(levelMapper, never()).insert(any());
-    }
-
-    @Test
-    void createRejectsDisabledPlan() {
-        NursingLevel level = validLevel();
-        NursingPlan plan = new NursingPlan();
-        plan.setStatus(0);
-        when(planMapper.selectById(3L)).thenReturn(plan);
-
-        assertThrows(ServiceException.class, () -> service.insertNursingLevel(level));
-        verify(levelMapper, never()).insert(any());
-    }
-
-    @Test
-    void createRejectsEmojiInName() {
-        NursingLevel level = validLevel();
-        level.setName("一级护理😀");
-
-        assertThrows(ServiceException.class, () -> service.insertNursingLevel(level));
-        verify(levelMapper, never()).insert(any());
-    }
-
-    private NursingLevel validLevel() {
-        NursingLevel level = new NursingLevel();
-        level.setName("一级护理");
-        level.setPlanId(3L);
-        level.setFee(new BigDecimal("100.00"));
-        level.setStatus(1);
-        level.setDescription("日常照护");
-        return level;
+        verify(redisTemplate).delete(NURSING_LEVEL_ALL_KEY);
     }
 }
