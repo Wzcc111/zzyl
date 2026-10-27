@@ -66,6 +66,11 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.zzyl</groupId>
+            <artifactId>zzyl-oss</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

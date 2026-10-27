@@ -56,4 +56,9 @@ public class CacheConstants
      * 护理项目缓存 redis key
      */
     public static final String NURSING_PROJECT_ALL_KEY = "nursingProject:all";
+
+    /**
+     * 体检报告缓存 redis key
+     */
+    public static final String HEALTH_REPORT = "healthReport";
 }
